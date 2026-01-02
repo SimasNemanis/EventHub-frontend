@@ -28,17 +28,20 @@ export default function Layout({ children, currentPageName }) {
     queryFn: () => eventhub.auth.me(),
     enabled: isAuthenticated === true,
     retry: false,
-    onSuccess: (data) => {
-      // Update localStorage when API returns data
-      if (data) {
-        localStorage.setItem('user', JSON.stringify(data));
-        setUserFromStorage(data);
+    onSuccess: (response) => {
+      // Extract user data from response (API returns { success: true, data: {...} })
+      const userData = response?.data || response;
+      if (userData) {
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUserFromStorage(userData);
       }
     },
   });
 
   // Use API data if available, otherwise use localStorage data
-  const currentUser = user || userFromStorage;
+  // Extract user data from response if it has a 'data' property
+  const userData = user?.data || user;
+  const currentUser = userData || userFromStorage;
 
   const [isDark, setIsDark] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
