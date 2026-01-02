@@ -73,7 +73,9 @@ export default function UserManagement() {
   const adminUsers = filteredUsers.filter(u => u.role === 'admin');
   const regularUsers = filteredUsers.filter(u => u.role === 'user');
 
-  if (currentUser?.role !== 'admin') {
+  // Extract user data from API response wrapper
+  const userData = currentUser?.data || currentUser;
+  if (userData?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">

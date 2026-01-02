@@ -255,9 +255,9 @@ export default function Layout({ children, currentPageName }) {
         }
       `}</style>
 
-      <nav className="bg-white dark:bg-gray-800 elevation-2 sticky top-0 z-50 transition-colors duration-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      <nav className="bg-white dark:bg-gray-800 elevation-2 sticky top-0 z-50 transition-colors duration-200 overflow-x-hidden">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 min-w-0">
             <Link to={createPageUrl("Dashboard")} className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--md-primary)' }}>
                 <Calendar className="w-6 h-6 text-white" />
@@ -301,7 +301,7 @@ export default function Layout({ children, currentPageName }) {
               ))}
             </div>
 
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

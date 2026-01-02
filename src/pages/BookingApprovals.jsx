@@ -88,7 +88,9 @@ export default function BookingApprovals() {
     }
   };
 
-  if (!user || user.role !== 'admin') {
+  // Extract user data from API response wrapper
+  const userData = user?.data || user;
+  if (!userData || userData.role !== 'admin') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
