@@ -328,7 +328,7 @@ export default function Layout({ children, currentPageName }) {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">{fullName}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{userRole}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400"><span style={{color: 'red'}}>{userRole}</span></p>
                 </div>
               </Link>
               <button
