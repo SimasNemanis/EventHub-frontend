@@ -187,8 +187,10 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-lg text-white font-medium ripple material-button"
-              style={{ backgroundColor: 'var(--md-primary)' }}
+              className="w-full py-3 rounded-lg text-white font-medium ripple material-button transition-colors"
+              style={{ backgroundColor: 'var(--md-primary, #6366f1)' }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
