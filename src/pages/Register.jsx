@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { eventhub } from "@/api/eventhubClient";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, Lock, Mail, User, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function Register() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -21,6 +22,11 @@ export default function Register() {
     setError("");
 
     // Validation
+    if (!formData.fullName.trim()) {
+      setError("Please enter your full name");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -34,16 +40,22 @@ export default function Register() {
     setLoading(true);
 
     try {
+      console.log('Registering user:', formData.email);
       const response = await eventhub.auth.register(
         formData.fullName,
         formData.email,
         formData.password
       );
       
-      // Redirect to login page
-      window.location.href = '/login';
+      console.log('Registration response:', response);
+      
+      // Redirect to login page after successful registration
+      setTimeout(() => {
+        navigate('/login');
+      }, 500);
     } catch (err) {
-      setError(err.message || "Failed to register");
+      console.error('Registration error:', err);
+      setError(err.message || "Failed to register. Please try again.");
       setLoading(false);
     }
   };
@@ -62,7 +74,7 @@ export default function Register() {
       <div className="max-w-md w-full mx-4">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ backgroundColor: 'var(--md-primary)' }}>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ backgroundColor: 'var(--md-primary, #6366f1)' }}>
             <Calendar className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
@@ -70,7 +82,7 @@ export default function Register() {
         </div>
 
         {/* Register Form */}
-        <div className="bg-white rounded-xl elevation-2 p-8">
+        <div className="bg-white rounded-xl shadow-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
@@ -135,14 +147,14 @@ export default function Register() {
                 <div className="mt-2 flex items-center gap-2">
                   <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
                     <div 
-                      className={`h-full transition-all bg-${strength.color}-500`}
+                      className={`h-full transition-all`}
                       style={{ 
                         width: strength.label === 'Weak' ? '33%' : strength.label === 'Medium' ? '66%' : '100%',
                         backgroundColor: strength.color === 'red' ? '#ef4444' : strength.color === 'yellow' ? '#eab308' : '#22c55e'
                       }}
                     />
                   </div>
-                  <span className={`text-xs font-medium text-${strength.color}-600`}>
+                  <span className={`text-xs font-medium`} style={{ color: strength.color === 'red' ? '#dc2626' : strength.color === 'yellow' ? '#ca8a04' : '#16a34a' }}>
                     {strength.label}
                   </span>
                 </div>
@@ -174,11 +186,11 @@ export default function Register() {
               <input type="checkbox" className="w-4 h-4 mt-0.5 rounded" required />
               <span className="text-gray-600">
                 I agree to the{' '}
-                <a href="#" className="font-medium" style={{ color: 'var(--md-primary)' }}>
+                <a href="#" className="font-medium" style={{ color: 'var(--md-primary, #6366f1)' }}>
                   Terms of Service
                 </a>
                 {' '}and{' '}
-                <a href="#" className="font-medium" style={{ color: 'var(--md-primary)' }}>
+                <a href="#" className="font-medium" style={{ color: 'var(--md-primary, #6366f1)' }}>
                   Privacy Policy
                 </a>
               </span>
@@ -187,10 +199,10 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-lg text-white font-medium ripple material-button transition-colors"
+              className="w-full py-3 rounded-lg text-white font-medium ripple material-button transition-colors disabled:opacity-50"
               style={{ backgroundColor: 'var(--md-primary, #6366f1)' }}
-              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-              onMouseLeave={(e) => e.target.style.opacity = '1'}
+              onMouseEnter={(e) => !loading && (e.target.style.opacity = '0.9')}
+              onMouseLeave={(e) => !loading && (e.target.style.opacity = '1')}
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
@@ -198,7 +210,7 @@ export default function Register() {
 
           <div className="mt-6 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium" style={{ color: 'var(--md-primary)' }}>
+            <Link to="/login" className="font-medium" style={{ color: 'var(--md-primary, #6366f1)' }}>
               Sign in
             </Link>
           </div>

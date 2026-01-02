@@ -19,18 +19,22 @@ export default function Login() {
       console.log('Attempting login with:', email);
       const response = await eventhub.auth.login(email, password);
       console.log('Login response:', response);
-      if (response.success) {
-        // Token is stored in httpOnly cookie by the server
+      
+      // Check if login was successful
+      if (response && (response.success || response.token)) {
         console.log('Login successful, navigating to dashboard');
-        navigate('/dashboard');
+        // Give a moment for the token to be stored
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 100);
       } else {
-        console.log('Login failed, response.success is false');
+        console.log('Login failed, no token in response');
         setError('Login failed. Please try again.');
+        setLoading(false);
       }
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Login failed. Please check your credentials.');
-    } finally {
       setLoading(false);
     }
   };
@@ -92,10 +96,10 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-lg text-white font-medium ripple material-button transition-colors"
+              className="w-full py-3 rounded-lg text-white font-medium ripple material-button transition-colors disabled:opacity-50"
               style={{ backgroundColor: 'var(--md-primary, #6366f1)' }}
-              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-              onMouseLeave={(e) => e.target.style.opacity = '1'}
+              onMouseEnter={(e) => !loading && (e.target.style.opacity = '0.9')}
+              onMouseLeave={(e) => !loading && (e.target.style.opacity = '1')}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
