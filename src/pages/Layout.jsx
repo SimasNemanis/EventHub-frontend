@@ -164,8 +164,11 @@ export default function Layout({ children, currentPageName }) {
   
   const isAdmin = currentUser?.role === 'admin';
   const isActive = (url) => location.pathname === url;
-  const fullName = currentUser?.full_name || (currentUser?.first_name && currentUser?.last_name ? `${currentUser.first_name} ${currentUser.last_name}` : currentUser?.first_name || 'User');
-  const userRole = currentUser?.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'Member';
+  
+  // Get user data from localStorage first, then fall back to API data
+  const displayUser = currentUser || userFromStorage;
+  const fullName = displayUser?.full_name || (displayUser?.first_name && displayUser?.last_name ? `${displayUser.first_name} ${displayUser.last_name}` : displayUser?.first_name || 'User');
+  const userRole = displayUser?.role ? displayUser.role.charAt(0).toUpperCase() + displayUser.role.slice(1) : 'Member';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
