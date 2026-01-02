@@ -99,16 +99,13 @@ export default function EventForm({ event, onSubmit, onCancel }) {
     }
     
     // Transform form data to match API expectations
-    // Combine date and time fields into ISO8601 datetime strings
-    const startDateTime = `${formData.date}T${formData.start_time}:00`;
-    const endDateTime = `${formData.date}T${formData.end_time}:00`;
-    
     const apiData = {
       title: formData.title,
       description: formData.description,
-      category: formData.category,
-      start_date: startDateTime,  // ISO8601 format: "2026-03-15T10:00:00"
-      end_date: endDateTime,      // ISO8601 format: "2026-03-15T16:00:00"
+      category: formData.category.toLowerCase(),
+      date: formData.date,
+      start_time: formData.start_time,
+      end_time: formData.end_time,
       location: formData.location,
       capacity: parseInt(formData.capacity) || 0,
       status: formData.status,
