@@ -56,13 +56,33 @@ function _getCurrentPage(url) {
 }
 
 // Protected route wrapper - uses API to check authentication
-function ProtectedRoute({ children, isAuthenticated, isLoading }) {
+function ProtectedRoute({ children, isAuthenticated, isLoading, requiredRole = null }) {
+    const [userRole, setUserRole] = useState(null);
+    
+    useEffect(() => {
+        const user = localStorage.getItem('user');
+        if (user) {
+            try {
+                const userData = JSON.parse(user);
+                setUserRole(userData.role);
+            } catch (e) {
+                console.error('Failed to parse user data:', e);
+            }
+        }
+    }, []);
+    
     if (isLoading) {
         return <div>Loading...</div>;
     }
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
+    
+    // Check if a specific role is required
+    if (requiredRole && userRole !== requiredRole) {
+        return <Navigate to="/dashboard" replace />;
+    }
+    
     return children;
 }
 
@@ -105,8 +125,10 @@ function PagesContent() {
                 <Route path="/register" element={<Register />} />
                 
                 {/* Protected Routes */}
-                <Route path="/admin" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><Admin /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><Analytics /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading} requiredRole="admin"><Admin /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading} requiredRole="admin"><Analytics /></ProtectedRoute>} />
+                <Route path="/usermanagement" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading} requiredRole="admin"><UserManagement /></ProtectedRoute>} />
+                <Route path="/bookingapprovals" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading} requiredRole="admin"><BookingApprovals /></ProtectedRoute>} />
                 <Route path="/calendarview" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><CalendarView /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><Dashboard /></ProtectedRoute>} />
                 <Route path="/events" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><Events /></ProtectedRoute>} />
@@ -117,8 +139,6 @@ function PagesContent() {
                 <Route path="/cart" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><Cart /></ProtectedRoute>} />
                 <Route path="/checkout" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><Checkout /></ProtectedRoute>} />
                 <Route path="/orderconfirmation" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><OrderConfirmation /></ProtectedRoute>} />
-                <Route path="/usermanagement" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><UserManagement /></ProtectedRoute>} />
-                <Route path="/bookingapprovals" element={<ProtectedRoute isAuthenticated={isAuthenticated} isLoading={isLoading}><BookingApprovals /></ProtectedRoute>} />
                 
                 {/* Catch all - redirect to home */}
                 <Route path="*" element={<Navigate to="/" replace />} />
