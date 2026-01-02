@@ -23,6 +23,12 @@ export default function Login() {
       
       // Check if login was successful
       if (response && (response.success || response.token)) {
+        console.log('Login successful, saving user data');
+        // Save user data to localStorage if provided
+        if (response.user) {
+          localStorage.setItem('user', JSON.stringify(response.user));
+          console.log('User data saved:', response.user);
+        }
         console.log('Login successful, invalidating cache');
         // Invalidate all queries to refresh data with new user context
         await queryClient.invalidateQueries();
