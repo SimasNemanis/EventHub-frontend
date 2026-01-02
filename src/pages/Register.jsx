@@ -15,7 +15,25 @@ export default function Register() {
     confirmPassword: ""
   });
   const [error, setError] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const validatePassword = (password) => {
+    const errors = [];
+    if (password.length < 8) {
+      errors.push("At least 8 characters");
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push("At least one uppercase letter (A-Z)");
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push("At least one lowercase letter (a-z)");
+    }
+    if (!/\d/.test(password)) {
+      errors.push("At least one number (0-9)");
+    }
+    return errors;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,8 +50,10 @@ export default function Register() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    const passErrors = validatePassword(formData.password);
+    if (passErrors.length > 0) {
+      setError("Password does not meet requirements");
+      setPasswordErrors(passErrors);
       return;
     }
 
@@ -68,6 +88,7 @@ export default function Register() {
   };
 
   const strength = passwordStrength(formData.password);
+  const currentPasswordErrors = formData.password ? validatePassword(formData.password) : [];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 py-12">
@@ -144,19 +165,32 @@ export default function Register() {
                 />
               </div>
               {strength && (
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all`}
-                      style={{ 
-                        width: strength.label === 'Weak' ? '33%' : strength.label === 'Medium' ? '66%' : '100%',
-                        backgroundColor: strength.color === 'red' ? '#ef4444' : strength.color === 'yellow' ? '#eab308' : '#22c55e'
-                      }}
-                    />
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all`}
+                        style={{ 
+                          width: strength.label === 'Weak' ? '33%' : strength.label === 'Medium' ? '66%' : '100%',
+                          backgroundColor: strength.color === 'red' ? '#ef4444' : strength.color === 'yellow' ? '#eab308' : '#22c55e'
+                        }}
+                      />
+                    </div>
+                    <span className={`text-xs font-medium`} style={{ color: strength.color === 'red' ? '#dc2626' : strength.color === 'yellow' ? '#ca8a04' : '#16a34a' }}>
+                      {strength.label}
+                    </span>
                   </div>
-                  <span className={`text-xs font-medium`} style={{ color: strength.color === 'red' ? '#dc2626' : strength.color === 'yellow' ? '#ca8a04' : '#16a34a' }}>
-                    {strength.label}
-                  </span>
+                  {currentPasswordErrors.length > 0 && (
+                    <div className="text-xs text-gray-600 space-y-1">
+                      <p className="font-medium">Password requirements:</p>
+                      {currentPasswordErrors.map((err, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className="text-red-500">✗</span>
+                          <span>{err}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

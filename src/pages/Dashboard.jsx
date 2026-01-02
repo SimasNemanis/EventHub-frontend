@@ -31,6 +31,7 @@ export default function Dashboard() {
   const upcomingEvents = events.filter(e => e.status === 'upcoming').slice(0, 3);
   const availableResources = resources.filter(r => r.available);
   const myActiveBookings = bookings.filter(b => b.status === 'confirmed');
+  const fullName = user?.full_name || (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.first_name || 'User');
 
   const stats = [
     {
@@ -68,7 +69,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome back, {user?.full_name || 'User'}!
+            Welcome back, {fullName}!
           </h1>
           <p className="text-gray-600 dark:text-gray-400">Here's what's happening with your events and resources</p>
         </div>

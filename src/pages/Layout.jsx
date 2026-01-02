@@ -148,6 +148,8 @@ export default function Layout({ children, currentPageName }) {
   
   const isAdmin = user?.role === 'admin';
   const isActive = (url) => location.pathname === url;
+  const fullName = user?.full_name || (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.first_name || 'User');
+  const userRole = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Member';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
@@ -306,11 +308,11 @@ export default function Layout({ children, currentPageName }) {
                 className="flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors"
               >
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium" style={{ backgroundColor: 'var(--md-accent)' }}>
-                  {user?.full_name?.[0]?.toUpperCase() || 'U'}
+                  {fullName?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.full_name || 'User'}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role || 'Member'}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{fullName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{userRole}</p>
                 </div>
               </Link>
               <button

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { eventhub } from '@/api/eventhubClient';
 import { Calendar } from 'lucide-react';
+import { queryClient } from '@/main';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -22,7 +23,10 @@ export default function Login() {
       
       // Check if login was successful
       if (response && (response.success || response.token)) {
-        console.log('Login successful, navigating to dashboard');
+        console.log('Login successful, invalidating cache');
+        // Invalidate all queries to refresh data with new user context
+        await queryClient.invalidateQueries();
+        console.log('Cache invalidated, navigating to dashboard');
         // Give a moment for the token to be stored
         setTimeout(() => {
           navigate('/dashboard');
