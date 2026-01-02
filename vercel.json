@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/proxy/:path*",
-      "destination": "https://hybridevent.duckdns.org:5000/api/:path*"
+      "destination": "https://46.224.28.13:5000/api/:path*"
     },
     {
       "source": "/(.*)",
