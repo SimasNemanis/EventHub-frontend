@@ -5,7 +5,7 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/proxy/:path*",
+      "source": "/api/:path*",
       "destination": "https://46.224.28.13:5000/api/:path*"
     },
     {
