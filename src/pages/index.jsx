@@ -57,19 +57,21 @@ function _getCurrentPage(url) {
 
 // Protected route wrapper - uses API to check authentication
 function ProtectedRoute({ children, isAuthenticated, isLoading, requiredRole = null }) {
-    const [userRole, setUserRole] = useState(null);
-    
-    useEffect(() => {
-        const user = localStorage.getItem('user');
-        if (user) {
-            try {
+    // Get user role directly from localStorage instead of using state
+    const getUserRole = () => {
+        try {
+            const user = localStorage.getItem('user');
+            if (user) {
                 const userData = JSON.parse(user);
-                setUserRole(userData.role);
-            } catch (e) {
-                console.error('Failed to parse user data:', e);
+                return userData.role;
             }
+        } catch (e) {
+            console.error('Failed to parse user data:', e);
         }
-    }, []);
+        return null;
+    };
+    
+    const userRole = getUserRole();
     
     if (isLoading) {
         return <div>Loading...</div>;
@@ -80,6 +82,7 @@ function ProtectedRoute({ children, isAuthenticated, isLoading, requiredRole = n
     
     // Check if a specific role is required
     if (requiredRole && userRole !== requiredRole) {
+        console.warn(`Access denied: Required role '${requiredRole}', but user has '${userRole}'`);
         return <Navigate to="/dashboard" replace />;
     }
     
