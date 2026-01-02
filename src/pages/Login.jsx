@@ -92,7 +92,10 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="w-full py-3 rounded-lg text-white font-medium ripple material-button transition-colors"
+              style={{ backgroundColor: 'var(--md-primary, #6366f1)' }}
+              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.target.style.opacity = '1'}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
