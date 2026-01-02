@@ -99,11 +99,18 @@ export default function EventForm({ event, onSubmit, onCancel }) {
     }
     
     // Transform form data to match API expectations
+    // Ensure date is a string in YYYY-MM-DD format
+    let dateString = formData.date;
+    if (formData.date instanceof Date) {
+      // If it's a Date object, convert to YYYY-MM-DD string
+      dateString = formData.date.toISOString().split('T')[0];
+    }
+    
     const apiData = {
       title: formData.title,
       description: formData.description,
       category: formData.category.toLowerCase(),
-      date: formData.date,
+      date: dateString,
       start_time: formData.start_time,
       end_time: formData.end_time,
       location: formData.location,
