@@ -17,12 +17,28 @@ export default function Layout({ children, currentPageName }) {
     retry: false,
   });
 
+  // Try to get user from localStorage first, then from API
+  const [userFromStorage, setUserFromStorage] = useState(() => {
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : null;
+  });
+
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => eventhub.auth.me(),
     enabled: isAuthenticated === true,
     retry: false,
+    onSuccess: (data) => {
+      // Update localStorage when API returns data
+      if (data) {
+        localStorage.setItem('user', JSON.stringify(data));
+        setUserFromStorage(data);
+      }
+    },
   });
+
+  // Use API data if available, otherwise use localStorage data
+  const currentUser = user || userFromStorage;
 
   const [isDark, setIsDark] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
@@ -49,13 +65,13 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   useEffect(() => {
-    if (user?.theme_preference) {
-      const prefersDark = user.theme_preference === 'dark' || 
-        (user.theme_preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (currentUser?.theme_preference) {
+      const prefersDark = currentUser.theme_preference === 'dark' || 
+        (currentUser.theme_preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
       setIsDark(prefersDark);
       document.documentElement.classList.toggle('dark', prefersDark);
     }
-  }, [user?.theme_preference]);
+  }, [currentUser?.theme_preference]);
 
   const toggleThemeMutation = useMutation({
     mutationFn: async (newTheme) => {
@@ -146,10 +162,10 @@ export default function Layout({ children, currentPageName }) {
     },
   ];
   
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = currentUser?.role === 'admin';
   const isActive = (url) => location.pathname === url;
-  const fullName = user?.full_name || (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.first_name || 'User');
-  const userRole = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Member';
+  const fullName = currentUser?.full_name || (currentUser?.first_name && currentUser?.last_name ? `${currentUser.first_name} ${currentUser.last_name}` : currentUser?.first_name || 'User');
+  const userRole = currentUser?.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : 'Member';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
