@@ -286,6 +286,12 @@ class EventHubClient {
         method: 'PUT',
         body: JSON.stringify({ role }),
       }),
+
+    inviteUser: (email, role) =>
+      this.request('/users/invite', {
+        method: 'POST',
+        body: JSON.stringify({ email, role }),
+      }),
   };
 
   // Orders endpoints

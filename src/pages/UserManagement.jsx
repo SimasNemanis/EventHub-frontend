@@ -23,7 +23,7 @@ export default function UserManagement() {
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['allUsers'],
-    queryFn: () => eventhub.entities.User.list('-created_date'),
+    queryFn: () => eventhub.users.list(),
   });
 
   const inviteUserMutation = useMutation({
@@ -40,7 +40,7 @@ export default function UserManagement() {
 
   const changeRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }) => {
-      await eventhub.entities.User.update(userId, { role: newRole });
+      await eventhub.users.changeRole(userId, newRole);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['allUsers']);
@@ -49,7 +49,7 @@ export default function UserManagement() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId) => {
-      await eventhub.entities.User.delete(userId);
+      await eventhub.users.delete(userId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['allUsers']);
