@@ -165,7 +165,7 @@ export default function MyBookings() {
               const isEvent = booking.booking_type === 'event';
               const eventDetails = isEvent ? getEventDetails(booking.event_id) : null;
               const resourceDetails = !isEvent ? getResourceDetails(booking.resource_id) : null;
-              const itemName = eventDetails?.name || resourceDetails?.name || 'Unknown';
+              const itemName = booking.event_title || booking.resource_name || eventDetails?.title || resourceDetails?.name || 'Unknown';
               const itemLocation = eventDetails?.location || resourceDetails?.location || '';
 
               return (
