@@ -133,11 +133,11 @@ export default function Dashboard() {
                     <div className="flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>{format(new Date(event.date), "MMM d, yyyy")}</span>
+                        <span>{format(new Date(event.start_date || event.date), "MMM d, yyyy")}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
-                        <span>{event.start_time}</span>
+                        <span>{event.start_time ? format(new Date(event.start_time), "h:mm a") : 'TBD'}</span>
                       </div>
                       {event.location && (
                         <div className="flex items-center gap-2">
