@@ -21,7 +21,7 @@ export default function EventCard({ event, onRegister, isRegistered, onJoinWaitl
 
   const getEventStatus = () => {
     const today = new Date().toISOString().split('T')[0];
-    const eventDate = event.date;
+    const eventDate = (event.start_date || event.date)?.split('T')[0];
     
     if (eventDate < today) return { label: 'Past Event', color: 'bg-gray-500' };
     if (eventDate === today) return { label: 'Today', color: 'bg-red-500' };
@@ -91,11 +91,11 @@ export default function EventCard({ event, onRegister, isRegistered, onJoinWaitl
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
             <Calendar className="w-4 h-4" style={{ color: 'var(--md-primary)' }} />
-            <span>{format(new Date(event.date), "MMMM d, yyyy")}</span>
+            <span>{format(new Date(event.start_date || event.date), "MMMM d, yyyy")}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
             <Clock className="w-4 h-4" style={{ color: 'var(--md-primary)' }} />
-            <span>{event.start_time} - {event.end_time}</span>
+            <span>{event.start_time ? format(new Date(event.start_time), "h:mm a") : 'TBD'} - {event.end_time ? format(new Date(event.end_time), "h:mm a") : 'TBD'}</span>
           </div>
           {event.location && (
             <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
