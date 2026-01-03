@@ -294,6 +294,22 @@ class EventHubClient {
       }),
   };
 
+  // Event Resources endpoints
+  eventResources = {
+    assign: (eventId, resourceId) =>
+      this.request('/event-resources', {
+        method: 'POST',
+        body: JSON.stringify({ eventId, resourceId }),
+      }),
+
+    getByEvent: (eventId) => this.request(`/event-resources/event/${eventId}`),
+
+    remove: (eventId, resourceId) =>
+      this.request(`/event-resources/event/${eventId}/resource/${resourceId}`, {
+        method: 'DELETE',
+      }),
+  };
+
   // Orders endpoints
   orders = {
     list: () => this.request('/orders'),
