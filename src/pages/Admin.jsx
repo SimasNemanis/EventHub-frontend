@@ -23,6 +23,9 @@ export default function Admin() {
       const response = await eventhub.events.list();
       return Array.isArray(response) ? response : (response?.data || []);
     },
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: resources = [] } = useQuery({
@@ -31,6 +34,9 @@ export default function Admin() {
       const response = await eventhub.resources.list();
       return Array.isArray(response) ? response : (response?.data || []);
     },
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const generateRecurringEvents = (baseEvent) => {
