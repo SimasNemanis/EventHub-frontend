@@ -137,22 +137,22 @@ export default function EventForm({ event, onSubmit, onCancel }) {
     }
     
     // Transform form data to match API expectations
-    // Ensure date is a string in YYYY-MM-DD format
+    // Convert date + time fields to ISO datetime strings
     let dateString = formData.date;
-    console.log('Form date value:', formData.date, 'Type:', typeof formData.date);
     if (formData.date instanceof Date) {
-      // If it's a Date object, convert to YYYY-MM-DD string
       dateString = formData.date.toISOString().split('T')[0];
     }
-    console.log('Final date string:', dateString);
+    
+    // Create ISO datetime strings for start_date and end_date
+    const start_date = `${dateString}T${formData.start_time}:00`;
+    const end_date = `${dateString}T${formData.end_time}:00`;
     
     const apiData = {
       title: formData.title,
       description: formData.description,
       category: formData.category.toLowerCase(),
-      date: dateString,
-      start_time: formData.start_time,
-      end_time: formData.end_time,
+      start_date,
+      end_date,
       location: formData.location,
       capacity: parseInt(formData.capacity) || 0,
       status: formData.status,
@@ -164,6 +164,7 @@ export default function EventForm({ event, onSubmit, onCancel }) {
       apiData.image_url = formData.image_url;
     }
     
+    console.log('Submitting API data:', apiData);
     onSubmit(apiData);
   };
 
