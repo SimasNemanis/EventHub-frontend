@@ -9,7 +9,35 @@ import { eventhub } from "@/api/eventhubClient";
 import { useQuery } from "@tanstack/react-query";
 
 export default function EventForm({ event, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState(event || {
+  // Parse event data if editing
+  const parseEventData = (eventData) => {
+    if (!eventData || !eventData.id) return null;
+    
+    let date = '';
+    let start_time = '09:00';
+    let end_time = '17:00';
+    
+    // Parse start_date and end_date if they exist
+    if (eventData.start_date) {
+      const startDate = new Date(eventData.start_date);
+      date = startDate.toISOString().split('T')[0]; // Extract YYYY-MM-DD
+      start_time = startDate.toTimeString().slice(0, 5); // Extract HH:MM
+    }
+    
+    if (eventData.end_date) {
+      const endDate = new Date(eventData.end_date);
+      end_time = endDate.toTimeString().slice(0, 5); // Extract HH:MM
+    }
+    
+    return {
+      ...eventData,
+      date,
+      start_time,
+      end_time
+    };
+  };
+  
+  const [formData, setFormData] = useState(parseEventData(event) || {
     title: '',
     description: '',
     category: 'workshop',
