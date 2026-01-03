@@ -41,7 +41,7 @@ export default function EventForm({ event, onSubmit, onCancel }) {
     title: '',
     description: '',
     category: 'workshop',
-    date: '',
+    date: new Date().toISOString().split('T')[0],
     start_time: '09:00',
     end_time: '17:00',
     location: '',
