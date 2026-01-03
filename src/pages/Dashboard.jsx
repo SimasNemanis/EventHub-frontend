@@ -28,7 +28,7 @@ export default function Dashboard() {
     enabled: !!user?.email,
   });
 
-  const upcomingEvents = events.filter(e => e.status === 'upcoming').slice(0, 3);
+  const upcomingEvents = events.filter(e => e.status === 'active' || e.status === 'upcoming').slice(0, 3);
   const availableResources = resources.filter(r => r.available);
   const myActiveBookings = bookings.filter(b => b.status === 'confirmed');
   const fullName = user?.full_name || (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.first_name || 'User');
@@ -36,7 +36,7 @@ export default function Dashboard() {
   const stats = [
     {
       title: "Upcoming Events",
-      value: events.filter(e => e.status === 'upcoming').length,
+      value: events.filter(e => e.status === 'active' || e.status === 'upcoming').length,
       icon: Calendar,
       color: "bg-blue-500",
       link: createPageUrl("Events")

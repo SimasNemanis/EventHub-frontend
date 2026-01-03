@@ -31,12 +31,28 @@ export default function CalendarView() {
 
   const getEventsForDate = (date) => {
     if (!date) return [];
-    return events.filter(event => isSameDay(new Date(event.date), date));
+    return events.filter(event => {
+      const eventDate = event.start_time || event.start_date || event.date;
+      if (!eventDate) return false;
+      try {
+        return isSameDay(new Date(eventDate), date);
+      } catch (e) {
+        return false;
+      }
+    });
   };
 
   const getBookingsForDate = (date) => {
     if (!date) return [];
-    return bookings.filter(booking => isSameDay(new Date(booking.date), date));
+    return bookings.filter(booking => {
+      const bookingDate = booking.start_time || booking.start_date || booking.date;
+      if (!bookingDate) return false;
+      try {
+        return isSameDay(new Date(bookingDate), date);
+      } catch (e) {
+        return false;
+      }
+    });
   };
 
   const selectedDateEvents = getEventsForDate(selectedDate);
