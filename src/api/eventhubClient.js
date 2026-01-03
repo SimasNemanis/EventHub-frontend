@@ -1,5 +1,5 @@
 // EventHub API Client - Replaces Base44
-const API_URL = 'http://46.224.28.13:3000/api'; // Direct backend connection
+const API_URL = '/api'; // Use Vercel proxy
 
 class EventHubClient {
   constructor() {
