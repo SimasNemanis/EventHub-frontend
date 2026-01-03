@@ -136,28 +136,43 @@ export default function EventForm({ event, onSubmit, onCancel }) {
       return;
     }
     
-    // Transform form data to match API expectations
-    // Convert date + time fields to ISO datetime strings
-    let dateString = formData.date;
-    if (formData.date instanceof Date) {
-      dateString = formData.date.toISOString().split('T')[0];
+    let apiData;
+
+    if (event && event.id) {
+      // UPDATE operation
+      let dateString = formData.date;
+      if (formData.date instanceof Date) {
+        dateString = formData.date.toISOString().split('T')[0];
+      }
+      const start_date = `${dateString}T${formData.start_time}:00`;
+      const end_date = `${dateString}T${formData.end_time}:00`;
+
+      apiData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category.toLowerCase(),
+        start_date,
+        end_date,
+        location: formData.location,
+        capacity: parseInt(formData.capacity) || 0,
+        status: formData.status,
+        ticket_price: parseFloat(formData.ticket_price) || 0
+      };
+    } else {
+      // CREATE operation
+      apiData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category.toLowerCase(),
+        date: formData.date,
+        start_time: formData.start_time,
+        end_time: formData.end_time,
+        location: formData.location,
+        capacity: parseInt(formData.capacity) || 0,
+        status: formData.status,
+        ticket_price: parseFloat(formData.ticket_price) || 0
+      };
     }
-    
-    // Create ISO datetime strings for start_date and end_date
-    const start_date = `${dateString}T${formData.start_time}:00`;
-    const end_date = `${dateString}T${formData.end_time}:00`;
-    
-    const apiData = {
-      title: formData.title,
-      description: formData.description,
-      category: formData.category.toLowerCase(),
-      start_date,
-      end_date,
-      location: formData.location,
-      capacity: parseInt(formData.capacity) || 0,
-      status: formData.status,
-      ticket_price: parseFloat(formData.ticket_price) || 0
-    };
     
     // Only add image_url if it's not empty
     if (formData.image_url && formData.image_url.trim()) {
