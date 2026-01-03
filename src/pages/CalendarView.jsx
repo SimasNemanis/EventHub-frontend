@@ -10,12 +10,18 @@ export default function CalendarView() {
 
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: () => eventhub.entities.Event.list(),
+    queryFn: async () => {
+      const response = await eventhub.events.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['allBookings'],
-    queryFn: () => eventhub.entities.Booking.list(),
+    queryFn: async () => {
+      const response = await eventhub.bookings.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const monthStart = startOfMonth(currentDate);
