@@ -27,7 +27,7 @@ export default function EventList({ events, onEdit, onDelete }) {
   const formatTime = (dateString) => {
     try {
       if (!dateString) return 'N/A';
-      return format(new Date(dateString), 'HH:mm');
+      return format(new Date(dateString), 'h:mm a');
     } catch {
       return 'N/A';
     }
