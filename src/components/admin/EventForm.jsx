@@ -68,6 +68,16 @@ export default function EventForm({ event, onSubmit, onCancel }) {
     queryFn: () => eventhub.entities.Event.list(),
   });
 
+  // Update formData when event prop changes (for editing)
+  useEffect(() => {
+    if (event && event.id) {
+      const parsedData = parseEventData(event);
+      if (parsedData) {
+        setFormData(parsedData);
+      }
+    }
+  }, [event?.id]);
+
   useEffect(() => {
     checkResourceConflicts();
   }, [formData.date, formData.start_time, formData.end_time, formData.assigned_resource_ids]);
