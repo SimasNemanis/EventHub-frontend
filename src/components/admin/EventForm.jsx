@@ -236,7 +236,6 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({...formData, date: e.target.value})}
-            required
           />
         </div>
 
