@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { eventhub } from "@/api/eventhubClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Users, Mail, Shield, Trash2, UserPlus, Search, Crown } from "lucide-react";
+import { Users, Shield, Trash2, UserPlus, Search, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
@@ -10,31 +10,48 @@ import ConfirmDialog from "../components/ConfirmDialog";
 export default function UserManagement() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [showInviteForm, setShowInviteForm] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("user");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createFormData, setCreateFormData] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    role: "user"
+  });
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [confirmRoleChange, setConfirmRoleChange] = useState(null);
+  const [createError, setCreateError] = useState("");
 
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => eventhub.auth.me(),
   });
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: usersResponse = {}, isLoading } = useQuery({
     queryKey: ['allUsers'],
     queryFn: () => eventhub.users.list(),
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
-  const inviteUserMutation = useMutation({
-    mutationFn: async ({ email, role }) => {
-      await eventhub.users.inviteUser(email, role);
+  // Handle both array and object responses from the API
+  const users = Array.isArray(usersResponse) ? usersResponse : (usersResponse.data || []);
+
+  const createUserMutation = useMutation({
+    mutationFn: async (userData) => {
+      return await eventhub.auth.register(userData.full_name, userData.email, userData.password);
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      // After user is created, update their role if needed
+      if (createFormData.role === 'admin' && data.user?.id) {
+        await eventhub.users.changeRole(data.user.id, 'admin');
+      }
       queryClient.invalidateQueries(['allUsers']);
-      setShowInviteForm(false);
-      setInviteEmail("");
-      setInviteRole("user");
+      setShowCreateForm(false);
+      setCreateFormData({ full_name: "", email: "", password: "", role: "user" });
+      setCreateError("");
+    },
+    onError: (error) => {
+      setCreateError(error.message || "Failed to create user");
     },
   });
 
@@ -44,6 +61,7 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['allUsers']);
+      setConfirmRoleChange(null);
     },
   });
 
@@ -53,17 +71,19 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['allUsers']);
+      setConfirmDelete(null);
     },
   });
 
-  const handleInvite = (e) => {
+  const handleCreateUser = (e) => {
     e.preventDefault();
-    if (inviteEmail) {
-      inviteUserMutation.mutate({ email: inviteEmail, role: inviteRole });
+    if (!createFormData.full_name || !createFormData.email || !createFormData.password) {
+      setCreateError("All fields are required");
+      return;
     }
+    setCreateError("");
+    createUserMutation.mutate(createFormData);
   };
-
-
 
   const filteredUsers = users.filter(user =>
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,31 +120,51 @@ export default function UserManagement() {
             </div>
           </div>
           <button
-            onClick={() => setShowInviteForm(!showInviteForm)}
+            onClick={() => setShowCreateForm(!showCreateForm)}
             className="px-4 py-3 rounded-lg text-white font-medium ripple material-button flex items-center gap-2"
             style={{ backgroundColor: 'var(--md-accent)' }}
           >
             <UserPlus className="w-5 h-5" />
-            Invite User
+            Create User
           </button>
         </div>
 
-        {/* Invite Form */}
-        {showInviteForm && (
+        {/* Create Form */}
+        {showCreateForm && (
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 elevation-2 mb-6">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Create New User</h3>
-            <form onSubmit={handleInvite} className="space-y-4">
-              <div className="flex gap-4">
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              {createError && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                  <p className="text-sm text-red-900 dark:text-red-200">{createError}</p>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  type="text"
+                  placeholder="Full Name"
+                  value={createFormData.full_name}
+                  onChange={(e) => setCreateFormData({ ...createFormData, full_name: e.target.value })}
+                  required
+                />
                 <Input
                   type="email"
                   placeholder="Email address"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  value={createFormData.email}
+                  onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
                   required
-                  className="flex-1"
                 />
-                <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger className="w-40">
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={createFormData.password}
+                  onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
+                  required
+                />
+                <Select value={createFormData.role} onValueChange={(value) => setCreateFormData({ ...createFormData, role: value })}>
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -132,20 +172,27 @@ export default function UserManagement() {
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setCreateFormData({ full_name: "", email: "", password: "", role: "user" });
+                    setCreateError("");
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
-                  disabled={inviteUserMutation.isPending}
-                  className="px-6 py-2 rounded-lg text-white font-medium ripple material-button whitespace-nowrap"
+                  disabled={createUserMutation.isPending}
+                  className="flex-1 px-4 py-2 rounded-lg text-white font-medium ripple material-button"
                   style={{ backgroundColor: 'var(--md-primary)' }}
                 >
-                  {inviteUserMutation.isPending ? 'Creating...' : 'Create User'}
+                  {createUserMutation.isPending ? 'Creating...' : 'Create User'}
                 </button>
-              </div>
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-xs text-blue-900 dark:text-blue-200">
-                  <strong>📧 How it works:</strong> An invitation email will be sent to the user with a link to set their password and complete registration. 
-                  {inviteRole === 'admin' && ' This user will have admin privileges once they complete registration.'}
-                </p>
               </div>
             </form>
           </div>
@@ -211,6 +258,11 @@ export default function UserManagement() {
               <div key={i} className="bg-white dark:bg-gray-800 rounded-lg h-24 elevation-1 animate-pulse" />
             ))}
           </div>
+        ) : users.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8 elevation-1 text-center">
+            <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-gray-600 dark:text-gray-400">No users found</p>
+          </div>
         ) : (
           <div className="space-y-6">
             {/* Admins Section */}
@@ -234,7 +286,7 @@ export default function UserManagement() {
                               <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                 Admin
                               </span>
-                              {user.id === currentUser.id && (
+                              {user.id === userData?.id && (
                                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                   You
                                 </span>
@@ -242,36 +294,33 @@ export default function UserManagement() {
                             </div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                              Joined {format(new Date(user.created_date), 'MMM d, yyyy')}
+                              Joined {format(new Date(user.created_at), 'MMM d, yyyy')}
                             </p>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Select
-                            value={user.role}
-                            onValueChange={(newRole) => setConfirmRoleChange({ user, newRole })}
-                            disabled={user.id === currentUser.id}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">User</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <button
-                            onClick={() => setConfirmDelete(user)}
-                            disabled={user.id === currentUser.id}
-                            className={`p-2 rounded-lg transition-colors ${
-                              user.id === currentUser.id
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : 'bg-red-50 text-red-600 hover:bg-red-100'
-                            }`}
-                            title={user.id === currentUser.id ? "You cannot delete yourself" : "Delete user"}
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                          {user.id !== userData?.id && (
+                            <>
+                              <Select
+                                value={user.role}
+                                onValueChange={(newRole) => setConfirmRoleChange({ user, newRole })}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="user">User</SelectItem>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <button
+                                onClick={() => setConfirmDelete(user)}
+                                className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -292,41 +341,50 @@ export default function UserManagement() {
                     <div key={user.id} className="bg-white dark:bg-gray-800 rounded-lg p-6 elevation-1 hover-elevation-2 transition-all">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-300 dark:bg-gray-600 text-white font-bold text-lg">
+                          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: 'var(--md-primary)' }}>
                             {user.full_name?.[0]?.toUpperCase() || 'U'}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="font-bold text-gray-900 dark:text-white">{user.full_name || 'No Name'}</h3>
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 User
                               </span>
+                              {user.id === userData?.id && (
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  You
+                                </span>
+                              )}
                             </div>
                             <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                              Joined {format(new Date(user.created_date), 'MMM d, yyyy')}
+                              Joined {format(new Date(user.created_at), 'MMM d, yyyy')}
                             </p>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Select
-                            value={user.role}
-                            onValueChange={(newRole) => setConfirmRoleChange({ user, newRole })}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="user">User</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <button
-                            onClick={() => setConfirmDelete(user)}
-                            className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
+                          {user.id !== userData?.id && (
+                            <>
+                              <Select
+                                value={user.role}
+                                onValueChange={(newRole) => setConfirmRoleChange({ user, newRole })}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="user">User</SelectItem>
+                                  <SelectItem value="admin">Admin</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <button
+                                onClick={() => setConfirmDelete(user)}
+                                className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -334,46 +392,30 @@ export default function UserManagement() {
                 </div>
               </div>
             )}
-
-            {/* Empty State */}
-            {filteredUsers.length === 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-12 elevation-1 text-center">
-                <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No users found</h3>
-                <p className="text-gray-600 dark:text-gray-400">Try adjusting your search</p>
-              </div>
-            )}
           </div>
         )}
 
-        <ConfirmDialog
-          isOpen={!!confirmDelete}
-          onClose={() => setConfirmDelete(null)}
-          onConfirm={() => {
-            deleteUserMutation.mutate(confirmDelete.id);
-            setConfirmDelete(null);
-          }}
-          title="Delete User"
-          message={`Are you sure you want to delete ${confirmDelete?.full_name}? This will permanently remove their account and all associated data.`}
-          confirmText="Delete User"
-          confirmColor="red"
-        />
+        {/* Confirm Dialogs */}
+        {confirmDelete && (
+          <ConfirmDialog
+            title="Delete User"
+            message={`Are you sure you want to delete ${confirmDelete.full_name}? This action cannot be undone.`}
+            onConfirm={() => deleteUserMutation.mutate(confirmDelete.id)}
+            onCancel={() => setConfirmDelete(null)}
+            isLoading={deleteUserMutation.isPending}
+            isDangerous
+          />
+        )}
 
-        <ConfirmDialog
-          isOpen={!!confirmRoleChange}
-          onClose={() => setConfirmRoleChange(null)}
-          onConfirm={() => {
-            changeRoleMutation.mutate({ 
-              userId: confirmRoleChange.user.id, 
-              newRole: confirmRoleChange.newRole 
-            });
-            setConfirmRoleChange(null);
-          }}
-          title="Change User Role"
-          message={`Are you sure you want to change ${confirmRoleChange?.user?.full_name}'s role to ${confirmRoleChange?.newRole}?`}
-          confirmText="Change Role"
-          confirmColor="blue"
-        />
+        {confirmRoleChange && (
+          <ConfirmDialog
+            title="Change User Role"
+            message={`Change ${confirmRoleChange.user.full_name}'s role to ${confirmRoleChange.newRole}?`}
+            onConfirm={() => changeRoleMutation.mutate({ userId: confirmRoleChange.user.id, newRole: confirmRoleChange.newRole })}
+            onCancel={() => setConfirmRoleChange(null)}
+            isLoading={changeRoleMutation.isPending}
+          />
+        )}
       </div>
     </div>
   );
