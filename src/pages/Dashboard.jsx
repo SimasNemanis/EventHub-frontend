@@ -14,17 +14,27 @@ export default function Dashboard() {
 
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: () => eventhub.entities.Event.list('-date'),
+    queryFn: async () => {
+      const response = await eventhub.events.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: resources = [] } = useQuery({
     queryKey: ['resources'],
-    queryFn: () => eventhub.entities.Resource.list(),
+    queryFn: async () => {
+      const response = await eventhub.resources.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['myBookings', user?.email],
-    queryFn: () => eventhub.entities.Booking.filter({ created_by: user?.email }),
+    queryFn: async () => {
+      const response = await eventhub.bookings.list();
+      const bookings = Array.isArray(response) ? response : (response?.data || []);
+      return bookings.filter(b => b.user_id === user?.id || b.created_by === user?.email);
+    },
     enabled: !!user?.email,
   });
 
