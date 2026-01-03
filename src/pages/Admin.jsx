@@ -103,6 +103,10 @@ export default function Admin() {
     onSuccess: () => {
       queryClient.invalidateQueries(['events']);
     },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to delete event';
+      alert(errorMessage);
+    },
   });
 
   const createResourceMutation = useMutation({
@@ -127,6 +131,10 @@ export default function Admin() {
     mutationFn: (id) => eventhub.resources.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['resources']);
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to delete resource';
+      alert(errorMessage);
     },
   });
 

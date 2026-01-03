@@ -57,6 +57,9 @@ export default function EventForm({ event, onSubmit, onCancel }) {
   });
 
   const [resourceConflicts, setResourceConflicts] = useState([]);
+  const [formErrors, setFormErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: resources = [] } = useQuery({
     queryKey: ['resources'],
@@ -129,64 +132,135 @@ export default function EventForm({ event, onSubmit, onCancel }) {
     setFormData({ ...formData, assigned_resource_ids: newIds });
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.title || !formData.title.trim()) {
+      errors.title = 'Event title is required';
+    }
+    if (!formData.date) {
+      errors.date = 'Event date is required';
+    }
+    if (!formData.location || !formData.location.trim()) {
+      errors.location = 'Location is required';
+    }
+    if (!formData.start_time) {
+      errors.start_time = 'Start time is required';
+    }
+    if (!formData.end_time) {
+      errors.end_time = 'End time is required';
+    }
+    if (formData.start_time >= formData.end_time) {
+      errors.end_time = 'End time must be after start time';
+    }
+    if (formData.capacity < 1) {
+      errors.capacity = 'Capacity must be at least 1';
+    }
+    if (formData.ticket_price < 0) {
+      errors.ticket_price = 'Ticket price cannot be negative';
+    }
+    
+    return errors;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (resourceConflicts.length > 0) {
-      alert('Please resolve resource conflicts before saving.');
+    setFormErrors({});
+    setSubmitError('');
+    
+    // Validate form
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
     
-    let apiData;
+    if (resourceConflicts.length > 0) {
+      setSubmitError('Please resolve resource conflicts before saving.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      let apiData;
 
-    if (event && event.id) {
-      // UPDATE operation
-      let dateString = formData.date;
-      if (formData.date instanceof Date) {
-        dateString = formData.date.toISOString().split('T')[0];
+      if (event && event.id) {
+        // UPDATE operation
+        let dateString = formData.date;
+        if (formData.date instanceof Date) {
+          dateString = formData.date.toISOString().split('T')[0];
+        }
+        const start_date = `${dateString}T${formData.start_time}:00`;
+        const end_date = `${dateString}T${formData.end_time}:00`;
+
+        apiData = {
+          title: formData.title,
+          description: formData.description,
+          category: formData.category.toLowerCase(),
+          start_date,
+          end_date,
+          location: formData.location,
+          capacity: parseInt(formData.capacity) || 0,
+          status: formData.status,
+          ticket_price: parseFloat(formData.ticket_price) || 0
+        };
+      } else {
+        // CREATE operation
+        apiData = {
+          title: formData.title,
+          description: formData.description,
+          category: formData.category.toLowerCase(),
+          date: formData.date,
+          start_time: formData.start_time,
+          end_time: formData.end_time,
+          location: formData.location,
+          capacity: parseInt(formData.capacity) || 0,
+          status: formData.status,
+          ticket_price: parseFloat(formData.ticket_price) || 0
+        };
       }
-      const start_date = `${dateString}T${formData.start_time}:00`;
-      const end_date = `${dateString}T${formData.end_time}:00`;
-
-      apiData = {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category.toLowerCase(),
-        start_date,
-        end_date,
-        location: formData.location,
-        capacity: parseInt(formData.capacity) || 0,
-        status: formData.status,
-        ticket_price: parseFloat(formData.ticket_price) || 0
-      };
-    } else {
-      // CREATE operation
-      apiData = {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category.toLowerCase(),
-        date: formData.date,
-        start_time: formData.start_time,
-        end_time: formData.end_time,
-        location: formData.location,
-        capacity: parseInt(formData.capacity) || 0,
-        status: formData.status,
-        ticket_price: parseFloat(formData.ticket_price) || 0
-      };
+      
+      // Only add image_url if it's not empty
+      if (formData.image_url && formData.image_url.trim()) {
+        apiData.image_url = formData.image_url;
+      }
+      
+      console.log('Submitting API data:', apiData);
+      await onSubmit(apiData);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setSubmitError(error.message || 'Failed to save event. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Only add image_url if it's not empty
-    if (formData.image_url && formData.image_url.trim()) {
-      apiData.image_url = formData.image_url;
-    }
-    
-    console.log('Submitting API data:', apiData);
-    onSubmit(apiData);
   };
 
   const availableResources = resources.filter(r => r.available);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {submitError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-red-800 font-medium">Error</p>
+            <p className="text-red-700 text-sm">{submitError}</p>
+          </div>
+        </div>
+      )}
+
+      {resourceConflicts.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800 font-medium mb-2">Resource Conflicts</p>
+          {resourceConflicts.map(conflict => (
+            <div key={conflict.resourceId} className="text-yellow-700 text-sm mb-2">
+              <strong>{conflict.resourceName}</strong> is already assigned to {conflict.events.length} event(s) at this time.
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <Label htmlFor="title">Event Title</Label>
@@ -194,8 +268,9 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             id="title"
             value={formData.title}
             onChange={(e) => setFormData({...formData, title: e.target.value})}
-            required
+            className={formErrors.title ? 'border-red-500' : ''}
           />
+          {formErrors.title && <p className="text-red-500 text-sm mt-1">{formErrors.title}</p>}
         </div>
 
         <div>
@@ -236,7 +311,9 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({...formData, date: e.target.value})}
+            className={formErrors.date ? 'border-red-500' : ''}
           />
+          {formErrors.date && <p className="text-red-500 text-sm mt-1">{formErrors.date}</p>}
         </div>
 
         <div>
@@ -245,7 +322,9 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             id="location"
             value={formData.location}
             onChange={(e) => setFormData({...formData, location: e.target.value})}
+            className={formErrors.location ? 'border-red-500' : ''}
           />
+          {formErrors.location && <p className="text-red-500 text-sm mt-1">{formErrors.location}</p>}
         </div>
 
         <div>
@@ -255,8 +334,9 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             type="time"
             value={formData.start_time}
             onChange={(e) => setFormData({...formData, start_time: e.target.value})}
-            required
+            className={formErrors.start_time ? 'border-red-500' : ''}
           />
+          {formErrors.start_time && <p className="text-red-500 text-sm mt-1">{formErrors.start_time}</p>}
         </div>
 
         <div>
@@ -266,8 +346,9 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             type="time"
             value={formData.end_time}
             onChange={(e) => setFormData({...formData, end_time: e.target.value})}
-            required
+            className={formErrors.end_time ? 'border-red-500' : ''}
           />
+          {formErrors.end_time && <p className="text-red-500 text-sm mt-1">{formErrors.end_time}</p>}
         </div>
 
         <div>
@@ -278,8 +359,9 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             min="1"
             value={formData.capacity}
             onChange={(e) => setFormData({...formData, capacity: parseInt(e.target.value)})}
-            required
+            className={formErrors.capacity ? 'border-red-500' : ''}
           />
+          {formErrors.capacity && <p className="text-red-500 text-sm mt-1">{formErrors.capacity}</p>}
         </div>
 
         <div>
@@ -291,8 +373,9 @@ export default function EventForm({ event, onSubmit, onCancel }) {
             min="0"
             value={formData.ticket_price}
             onChange={(e) => setFormData({...formData, ticket_price: parseFloat(e.target.value) || 0})}
-            required
+            className={formErrors.ticket_price ? 'border-red-500' : ''}
           />
+          {formErrors.ticket_price && <p className="text-red-500 text-sm mt-1">{formErrors.ticket_price}</p>}
         </div>
 
         <div>
@@ -323,142 +406,104 @@ export default function EventForm({ event, onSubmit, onCancel }) {
         </div>
 
         {/* Resource Assignment */}
-        <div className="md:col-span-2 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+        <div className="md:col-span-2">
           <div className="flex items-center gap-2 mb-4">
-            <Package className="w-5 h-5" style={{ color: 'var(--md-primary)' }} />
+            <Package className="w-5 h-5" />
             <Label className="text-base font-semibold">Assign Resources</Label>
           </div>
           
-          {availableResources.length > 0 ? (
-            <div className="grid md:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+          {availableResources.length === 0 ? (
+            <p className="text-gray-500 text-sm">No available resources. Create resources first.</p>
+          ) : (
+            <div className="space-y-2">
               {availableResources.map(resource => (
-                <label
-                  key={resource.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                    formData.assigned_resource_ids?.includes(resource.id)
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                  }`}
-                >
+                <div key={resource.id} className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.assigned_resource_ids?.includes(resource.id)}
+                    id={`resource-${resource.id}`}
+                    checked={(formData.assigned_resource_ids || []).includes(resource.id)}
                     onChange={() => toggleResource(resource.id)}
-                    className="w-5 h-5"
+                    className="rounded"
                   />
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900 dark:text-white text-sm">{resource.name}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{resource.type}</p>
-                  </div>
-                </label>
+                  <label htmlFor={`resource-${resource.id}`} className="text-sm cursor-pointer">
+                    {resource.name}
+                  </label>
+                </div>
               ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-600 dark:text-gray-400">No available resources. Create resources first.</p>
-          )}
-
-          {formData.assigned_resource_ids?.length > 0 && (
-            <div className="mt-3 text-sm text-gray-700 dark:text-gray-300">
-              ✅ {formData.assigned_resource_ids.length} resource(s) assigned
             </div>
           )}
         </div>
 
-        {/* Conflict Warnings */}
-        {resourceConflicts.length > 0 && (
-          <div className="md:col-span-2 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-semibold text-red-900 dark:text-red-200 mb-2">Resource Conflicts Detected</p>
-                {resourceConflicts.map((conflict, index) => (
-                  <div key={index} className="mb-2 text-sm text-red-800 dark:text-red-300">
-                    <p className="font-medium">• {conflict.resourceName}</p>
-                    <p className="ml-4 text-xs">
-                      Conflict with: {conflict.events.map(e => e.title).join(', ')}
-                    </p>
-                  </div>
-                ))}
-                <p className="text-xs text-red-700 dark:text-red-400 mt-2">
-                  Please change the date/time or remove conflicting resources.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Recurring Event Section */}
-        <div className="md:col-span-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <RefreshCw className="w-5 h-5" style={{ color: 'var(--md-primary)' }} />
-              <Label className="text-base font-semibold">Recurring Event</Label>
-            </div>
+        {/* Recurring Event */}
+        <div className="md:col-span-2">
+          <div className="flex items-center gap-2">
             <Switch
               checked={formData.is_recurring}
               onCheckedChange={(checked) => setFormData({...formData, is_recurring: checked})}
             />
+            <Label>Make this a recurring event</Label>
           </div>
-
-          {formData.is_recurring && (
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="recurrence_pattern">Repeat Pattern</Label>
-                <Select
-                  value={formData.recurrence_pattern}
-                  onValueChange={(value) => setFormData({...formData, recurrence_pattern: value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="biweekly">Bi-Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="recurrence_end_date">End Recurrence Date</Label>
-                <Input
-                  id="recurrence_end_date"
-                  type="date"
-                  value={formData.recurrence_end_date}
-                  onChange={(e) => setFormData({...formData, recurrence_end_date: e.target.value})}
-                  min={formData.date}
-                  required={formData.is_recurring}
-                />
-              </div>
-
-              <div className="md:col-span-2 text-sm text-gray-600 dark:text-gray-400">
-                💡 Recurring events will use the same assigned resources for all instances.
-              </div>
-            </div>
-          )}
         </div>
+
+        {formData.is_recurring && (
+          <>
+            <div>
+              <Label htmlFor="recurrence_pattern">Recurrence Pattern</Label>
+              <Select
+                value={formData.recurrence_pattern}
+                onValueChange={(value) => setFormData({...formData, recurrence_pattern: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="recurrence_end_date">Recurrence End Date</Label>
+              <Input
+                id="recurrence_end_date"
+                type="date"
+                value={formData.recurrence_end_date}
+                onChange={(e) => setFormData({...formData, recurrence_end_date: e.target.value})}
+              />
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="flex gap-3 pt-4">
+      {/* Form Actions */}
+      <div className="flex gap-3 justify-end pt-6 border-t">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-3 rounded-lg border border-gray-300 dark:border-gray-600 font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors material-button flex items-center justify-center gap-2"
+          disabled={isSubmitting}
+          className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4 inline mr-2" />
           Cancel
         </button>
         <button
           type="submit"
-          disabled={resourceConflicts.length > 0}
-          className={`flex-1 py-3 rounded-lg font-medium text-white ripple material-button flex items-center justify-center gap-2 ${
-            resourceConflicts.length > 0 ? 'bg-gray-400 cursor-not-allowed' : ''
-          }`}
-          style={resourceConflicts.length === 0 ? { backgroundColor: 'var(--md-primary)' } : {}}
+          disabled={isSubmitting}
+          className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
         >
-          <Save className="w-5 h-5" />
-          {event ? 'Update Event' : formData.is_recurring ? 'Create Recurring Events' : 'Create Event'}
+          {isSubmitting ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              {event && event.id ? 'Update Event' : 'Create Event'}
+            </>
+          )}
         </button>
       </div>
     </form>
