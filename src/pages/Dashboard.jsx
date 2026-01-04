@@ -9,7 +9,10 @@ import { createPageUrl } from "@/utils";
 export default function Dashboard() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => eventhub.auth.me(),
+    queryFn: async () => {
+      const response = await eventhub.auth.me();
+      return response?.data || response;
+    },
   });
 
   const { data: events = [] } = useQuery({
@@ -29,13 +32,16 @@ export default function Dashboard() {
   });
 
   const { data: bookings = [] } = useQuery({
-    queryKey: ['myBookings', user?.id],
+    queryKey: ['myBookings', user?.id, user?.role],
     queryFn: async () => {
+      if (!user) return [];
+      
       const response = await eventhub.bookings.list();
       const bookings = Array.isArray(response) ? response : (response?.data || []);
+      
       // Backend filters by user_id for non-admins, but admins get all bookings
       // So we need to filter by current user ID on frontend for admins
-      if (user?.role === 'admin') {
+      if (user.role === 'admin') {
         return bookings.filter(b => b.user_id === user.id);
       }
       return bookings;
