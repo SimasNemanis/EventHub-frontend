@@ -40,6 +40,18 @@ export default function Events() {
   // Handle event registration
   const handleRegister = async (event) => {
     try {
+      // Check if already registered
+      const bookings = await eventhub.bookings.list();
+      const bookingsList = Array.isArray(bookings) ? bookings : (bookings?.data || []);
+      const alreadyRegistered = bookingsList.some(booking => 
+        booking.event_id === event.id && booking.status === 'confirmed'
+      );
+      
+      if (alreadyRegistered) {
+        alert(`You are already registered for "${event.title}"!`);
+        return;
+      }
+      
       const booking = await eventhub.bookings.create({
         booking_type: 'event',
         event_id: event.id,
@@ -56,13 +68,52 @@ export default function Events() {
       setEvents(eventsList);
     } catch (err) {
       console.error('Error registering for event:', err);
-      alert('Failed to register for event');
+      
+      // Show better error messages
+      let errorMessage = 'Failed to register for event';
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 
   // Handle add to cart
-  const handleAddToCart = (event) => {
+  const handleAddToCart = async (event) => {
     try {
+      // Check if already in cart
+      const savedCart = localStorage.getItem('cart');
+      const currentCart = savedCart ? JSON.parse(savedCart) : [];
+      
+      const alreadyInCart = currentCart.some(item => 
+        item.type === 'event' && item.itemId === event.id
+      );
+      
+      if (alreadyInCart) {
+        alert('This event is already in your cart!');
+        return;
+      }
+      
+      // Check if already registered
+      try {
+        const bookings = await eventhub.bookings.list();
+        const bookingsList = Array.isArray(bookings) ? bookings : (bookings?.data || []);
+        const alreadyRegistered = bookingsList.some(booking => 
+          booking.event_id === event.id && booking.status === 'confirmed'
+        );
+        
+        if (alreadyRegistered) {
+          alert(`You are already registered for "${event.title}"!`);
+          return;
+        }
+      } catch (err) {
+        console.error('Error checking existing bookings:', err);
+        // Continue anyway if we can't check
+      }
+      
       const cartItem = {
         type: 'event',
         itemId: event.id,
@@ -72,8 +123,6 @@ export default function Events() {
         totalPrice: event.ticket_price || 0,
       };
 
-      const savedCart = localStorage.getItem('cart');
-      const currentCart = savedCart ? JSON.parse(savedCart) : [];
       currentCart.push(cartItem);
       localStorage.setItem('cart', JSON.stringify(currentCart));
       window.dispatchEvent(new Event('cartUpdated'));

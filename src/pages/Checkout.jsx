@@ -77,7 +77,28 @@ export default function Checkout() {
       }, 2000);
     } catch (error) {
       console.error('Payment error:', error);
-      alert('Payment failed: ' + (error.message || 'Please try again.'));
+      
+      // Extract the actual error message from the backend response
+      let errorMessage = 'Please try again.';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Check for specific HTTP status codes
+      if (error.response?.status === 409) {
+        // Conflict - likely duplicate booking
+        alert('❌ Booking Conflict\n\n' + errorMessage);
+      } else if (error.response?.status === 400) {
+        // Bad request - validation error
+        alert('❌ Invalid Request\n\n' + errorMessage);
+      } else {
+        alert('❌ Payment Failed\n\n' + errorMessage);
+      }
     } finally {
       setProcessing(false);
     }

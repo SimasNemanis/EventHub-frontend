@@ -54,6 +54,42 @@ export default function Resources() {
   console.log('Filtered resources:', filteredResources);
 
   const addToCart = (resource, formData) => {
+    // Check if already in cart with same date/time
+    const savedCart = localStorage.getItem('cart');
+    const currentCart = savedCart ? JSON.parse(savedCart) : [];
+    
+    const alreadyInCart = currentCart.some(item => 
+      item.type === 'resource' && 
+      item.itemId === resource.id &&
+      item.startDate === formData.date &&
+      item.startTime === formData.start_time &&
+      item.endTime === formData.end_time
+    );
+    
+    if (alreadyInCart) {
+      alert('This resource booking is already in your cart!');
+      setSelectedResource(null);
+      return;
+    }
+    
+    // Check if already booked for this time
+    const hasConflict = allBookings.some(booking => {
+      if (booking.resource_id !== resource.id || booking.status !== 'confirmed') return false;
+      
+      const bookingStart = new Date(booking.start_date);
+      const bookingEnd = new Date(booking.end_date);
+      const newStart = new Date(`${formData.date}T${formData.start_time}:00`);
+      const newEnd = new Date(`${formData.date}T${formData.end_time}:00`);
+      
+      return (newStart < bookingEnd && newEnd > bookingStart);
+    });
+    
+    if (hasConflict) {
+      alert(`You already have a booking for "${resource.name}" at this time!`);
+      setSelectedResource(null);
+      return;
+    }
+    
     const totalPrice = resource.daily_price || 0;
 
     const cartItem = {
@@ -71,8 +107,6 @@ export default function Resources() {
       notes: formData.notes
     };
 
-    const savedCart = localStorage.getItem('cart');
-    const currentCart = savedCart ? JSON.parse(savedCart) : [];
     currentCart.push(cartItem);
     localStorage.setItem('cart', JSON.stringify(currentCart));
     window.dispatchEvent(new Event('cartUpdated'));
