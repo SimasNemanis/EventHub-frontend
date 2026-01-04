@@ -50,7 +50,7 @@ export default function Checkout() {
       // Format cart items for the backend
       const formattedItems = cartItems.map(item => ({
         type: item.type || 'event',
-        itemId: item.id,
+        itemId: item.itemId,
         name: item.name,
         totalPrice: parseFloat(item.totalPrice) || 0,
         startDate: item.startDate || new Date().toISOString().split('T')[0],
