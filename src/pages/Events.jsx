@@ -200,20 +200,23 @@ export default function Events() {
                   )}
 
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleRegister(event)}
-                      className="flex-1 px-4 py-2 rounded-lg font-medium text-white transition-all"
-                      style={{ backgroundColor: 'var(--md-primary)' }}
-                    >
-                      Register
-                    </button>
-                    <button
-                      onClick={() => handleAddToCart(event)}
-                      className="flex-1 px-4 py-2 rounded-lg font-medium border-2 transition-all"
-                      style={{ borderColor: 'var(--md-primary)', color: 'var(--md-primary)' }}
-                    >
-                      Add to Cart
-                    </button>
+                    {event.ticket_price > 0 ? (
+                      <button
+                        onClick={() => handleAddToCart(event)}
+                        className="flex-1 px-4 py-2 rounded-lg font-medium text-white transition-all"
+                        style={{ backgroundColor: 'var(--md-primary)' }}
+                      >
+                        Add to Cart
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleRegister(event)}
+                        className="flex-1 px-4 py-2 rounded-lg font-medium text-white transition-all"
+                        style={{ backgroundColor: 'var(--md-primary)' }}
+                      >
+                        Register
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

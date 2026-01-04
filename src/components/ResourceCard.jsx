@@ -19,7 +19,7 @@ const typeColors = {
   other: "bg-gray-500"
 };
 
-export default function ResourceCard({ resource, onBook, onAddToCart }) {
+export default function ResourceCard({ resource, onBook, onAddToCart, onBookNow }) {
   // Determine if resource is available
   const isAvailable = resource.availability_status === 'available';
   
@@ -105,14 +105,22 @@ export default function ResourceCard({ resource, onBook, onAddToCart }) {
         </div>
 
         <button
-          onClick={() => onAddToCart(resource)}
+          onClick={() => {
+            if (resource.daily_price > 0) {
+              onAddToCart(resource);
+            } else if (onBookNow) {
+              onBookNow(resource);
+            } else {
+              onAddToCart(resource);
+            }
+          }}
           disabled={!isAvailable}
           className={`w-full py-3 rounded-lg font-medium text-white ripple material-button ${
             !isAvailable ? 'bg-gray-400 cursor-not-allowed' : ''
           }`}
           style={isAvailable ? { backgroundColor: 'var(--md-primary)' } : {}}
         >
-          {isAvailable ? 'Add to Cart' : 'Not Available'}
+          {!isAvailable ? 'Not Available' : resource.daily_price > 0 ? 'Add to Cart' : 'Book Now'}
         </button>
       </div>
     </div>
