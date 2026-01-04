@@ -7,7 +7,11 @@ import { Switch } from "@/components/ui/switch";
 import { Save, X, Plus, Trash2 } from "lucide-react";
 
 export default function ResourceForm({ resource, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState(resource || {
+  // Map daily_price from API to price_per_day for form
+  const initialData = resource ? {
+    ...resource,
+    price_per_day: resource.daily_price || resource.price_per_day || 0
+  } : {
     name: '',
     type: 'room',
     description: '',
@@ -17,7 +21,9 @@ export default function ResourceForm({ resource, onSubmit, onCancel }) {
     features: [],
     available: true,
     price_per_day: 0
-  });
+  };
+  
+  const [formData, setFormData] = useState(initialData);
 
   const [newFeature, setNewFeature] = useState('');
 
