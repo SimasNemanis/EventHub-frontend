@@ -87,7 +87,20 @@ export default function MyBookings() {
     return booking.booking_type === activeTab;
   });
 
-  const activeBookings = filteredBookings.filter(b => b.status === 'confirmed');
+  // Separate bookings into active (upcoming/current), past, and cancelled
+  const now = new Date();
+  const confirmedBookings = filteredBookings.filter(b => b.status === 'confirmed');
+  
+  const activeBookings = confirmedBookings.filter(b => {
+    const endDate = new Date(b.end_date);
+    return endDate >= now; // Booking hasn't ended yet
+  });
+  
+  const pastBookings = confirmedBookings.filter(b => {
+    const endDate = new Date(b.end_date);
+    return endDate < now; // Booking has ended
+  });
+  
   const cancelledBookings = filteredBookings.filter(b => b.status === 'cancelled');
 
   const canCancel = (booking) => {
@@ -230,6 +243,74 @@ export default function MyBookings() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Past Bookings (History) */}
+        {pastBookings.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">History</h2>
+            <div className="space-y-4">
+              {pastBookings.map((booking) => {
+                const isEvent = booking.booking_type === 'event';
+                const eventDetails = isEvent ? getEventDetails(booking.event_id) : null;
+                const resourceDetails = !isEvent ? getResourceDetails(booking.resource_id) : null;
+                const itemName = booking.event_title || booking.resource_name || eventDetails?.title || resourceDetails?.name || 'Unknown';
+                const itemLocation = eventDetails?.location || resourceDetails?.location || '';
+
+                return (
+                  <div key={booking.id} className="bg-gray-50 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-700">{itemName}</h3>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-2 ${
+                          isEvent ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          {isEvent ? 'Event Registration' : 'Resource Booking'}
+                        </span>
+                        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium mt-2 ml-2 bg-gray-200 text-gray-600">
+                          Completed
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setConfirmCancel(booking)}
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete from history"
+                      >
+                        <XCircle className="w-5 h-5 text-gray-400 hover:text-red-500" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDate(booking.start_date)}</span>
+                      </div>
+                      {booking.start_date && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          <span>{formatTime(booking.start_date)} - {formatTime(booking.end_date)}</span>
+                        </div>
+                      )}
+                      {itemLocation && (
+                        <div className="flex items-center gap-2 col-span-2">
+                          <MapPin className="w-4 h-4" />
+                          <span>{itemLocation}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {booking.total_price && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <p className="text-lg font-bold text-gray-700">
+                          Total: ${parseFloat(booking.total_price).toFixed(2)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
