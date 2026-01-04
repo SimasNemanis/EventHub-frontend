@@ -71,9 +71,9 @@ export default function Checkout() {
       // Clear cart after successful order
       localStorage.removeItem('cart');
 
-      // Redirect to confirmation page after 2 seconds
+      // Redirect to My Bookings page after 2 seconds
       setTimeout(() => {
-        navigate(`/order-confirmation?orderId=${response.data.id}`);
+        navigate('/mybookings');
       }, 2000);
     } catch (error) {
       console.error('Payment error:', error);
@@ -100,7 +100,7 @@ export default function Checkout() {
         <div className="text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Order Placed Successfully!</h2>
-          <p className="text-gray-600 dark:text-gray-400">Redirecting to confirmation page...</p>
+          <p className="text-gray-600 dark:text-gray-400">Redirecting to your bookings...</p>
         </div>
       </div>
     );
