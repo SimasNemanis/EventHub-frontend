@@ -7,22 +7,34 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 export default function Analytics() {
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: () => eventhub.entities.Event.list(),
+    queryFn: async () => {
+      const response = await eventhub.events.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: resources = [] } = useQuery({
     queryKey: ['resources'],
-    queryFn: () => eventhub.entities.Resource.list(),
+    queryFn: async () => {
+      const response = await eventhub.resources.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['allBookings'],
-    queryFn: () => eventhub.entities.Booking.list(),
+    queryFn: async () => {
+      const response = await eventhub.bookings.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: ratings = [] } = useQuery({
     queryKey: ['ratings'],
-    queryFn: () => eventhub.entities.Rating.list(),
+    queryFn: async () => {
+      const response = await eventhub.ratings.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   // Event Stats
