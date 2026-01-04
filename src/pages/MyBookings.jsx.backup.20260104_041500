@@ -235,8 +235,9 @@ export default function MyBookings() {
             <div className="space-y-4">
               {cancelledBookings.map((booking) => {
                 const isEvent = booking.booking_type === 'event';
-                // Use the joined fields from the backend instead of looking up again
-                const itemName = booking.event_title || booking.resource_name || 'Unknown';
+                const eventDetails = isEvent ? getEventDetails(booking.event_id) : null;
+                const resourceDetails = !isEvent ? getResourceDetails(booking.resource_id) : null;
+                const itemName = eventDetails?.name || resourceDetails?.name || 'Unknown';
 
                 return (
                   <div key={booking.id} className="bg-gray-50 rounded-lg p-6 opacity-60">

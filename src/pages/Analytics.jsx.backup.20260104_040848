@@ -165,27 +165,16 @@ export default function Analytics() {
             </button>
             <button
               onClick={async () => {
-                try {
-                  const token = localStorage.getItem('token');
-                  const response = await fetch(`${eventhub.baseURL}/api/bookings/export/csv`, {
-                    headers: {
-                      'Authorization': `Bearer ${token}`
-                    }
-                  });
-                  const csvText = await response.text();
-                  const blob = new Blob([csvText], { type: 'text/csv' });
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
-                  document.body.appendChild(a);
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                  a.remove();
-                } catch (error) {
-                  console.error('Export failed:', error);
-                  alert('Failed to export bookings');
-                }
+                const response = await eventhub.functions.invoke('exportBookingsCSV');
+                const blob = new Blob([response.data], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
               }}
               className="px-6 py-3 rounded-lg bg-green-600 text-white font-medium ripple material-button flex items-center gap-2"
             >
@@ -194,27 +183,16 @@ export default function Analytics() {
             </button>
             <button
               onClick={async () => {
-                try {
-                  const token = localStorage.getItem('token');
-                  const response = await fetch(`${eventhub.baseURL}/api/orders/export/csv`, {
-                    headers: {
-                      'Authorization': `Bearer ${token}`
-                    }
-                  });
-                  const csvText = await response.text();
-                  const blob = new Blob([csvText], { type: 'text/csv' });
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
-                  document.body.appendChild(a);
-                  a.click();
-                  window.URL.revokeObjectURL(url);
-                  a.remove();
-                } catch (error) {
-                  console.error('Export failed:', error);
-                  alert('Failed to export orders');
-                }
+                const response = await eventhub.functions.invoke('exportOrdersCSV');
+                const blob = new Blob([response.data], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
               }}
               className="px-6 py-3 rounded-lg bg-purple-600 text-white font-medium ripple material-button flex items-center gap-2"
             >

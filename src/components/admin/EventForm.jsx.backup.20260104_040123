@@ -33,11 +33,7 @@ export default function EventForm({ event, onSubmit, onCancel }) {
       ...eventData,
       date,
       start_time,
-      end_time,
-      assigned_resource_ids: eventData.assigned_resource_ids || [],
-      is_recurring: eventData.is_recurring || false,
-      recurrence_pattern: eventData.recurrence_pattern || 'weekly',
-      recurrence_end_date: eventData.recurrence_end_date || ''
+      end_time
     };
   };
   
@@ -207,11 +203,7 @@ export default function EventForm({ event, onSubmit, onCancel }) {
           location: formData.location,
           capacity: parseInt(formData.capacity) || 0,
           status: formData.status,
-          ticket_price: parseFloat(formData.ticket_price) || 0,
-          assigned_resource_ids: formData.assigned_resource_ids || [],
-          is_recurring: formData.is_recurring || false,
-          recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : null,
-          recurrence_end_date: formData.is_recurring ? formData.recurrence_end_date : null
+          ticket_price: parseFloat(formData.ticket_price) || 0
         };
       } else {
         // CREATE operation
@@ -225,11 +217,7 @@ export default function EventForm({ event, onSubmit, onCancel }) {
           location: formData.location,
           capacity: parseInt(formData.capacity) || 0,
           status: formData.status,
-          ticket_price: parseFloat(formData.ticket_price) || 0,
-          assigned_resource_ids: formData.assigned_resource_ids || [],
-          is_recurring: formData.is_recurring || false,
-          recurrence_pattern: formData.is_recurring ? formData.recurrence_pattern : null,
-          recurrence_end_date: formData.is_recurring ? formData.recurrence_end_date : null
+          ticket_price: parseFloat(formData.ticket_price) || 0
         };
       }
       

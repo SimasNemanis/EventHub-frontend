@@ -29,18 +29,17 @@ export default function Dashboard() {
   });
 
   const { data: bookings = [] } = useQuery({
-    queryKey: ['myBookings', user?.id],
+    queryKey: ['myBookings', user?.email],
     queryFn: async () => {
       const response = await eventhub.bookings.list();
       const bookings = Array.isArray(response) ? response : (response?.data || []);
-      // Backend already filters by user_id for non-admins
-      return bookings;
+      return bookings.filter(b => b.user_id === user?.id || b.created_by === user?.email);
     },
-    enabled: !!user?.id,
+    enabled: !!user?.email,
   });
 
   const upcomingEvents = events.filter(e => e.status === 'active' || e.status === 'upcoming').slice(0, 3);
-  const availableResources = resources.filter(r => r.availability_status === 'available');
+  const availableResources = resources.filter(r => r.available);
   const myActiveBookings = bookings.filter(b => b.status === 'confirmed');
   const fullName = user?.full_name || (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.first_name || 'User');
 
