@@ -42,12 +42,13 @@ export default function MyBookings() {
 
   const cancelBookingMutation = useMutation({
     mutationFn: async (booking) => {
-      // Check if booking is within 24 hours
+      // Check if booking is within 24 hours (but not in the past)
       const bookingDate = new Date(booking.start_date);
       const now = new Date();
       const hoursDiff = (bookingDate - now) / (1000 * 60 * 60);
       
-      if (hoursDiff < 24 && hoursDiff > 0) {
+      // Only prevent cancellation if booking is upcoming and within 24 hours
+      if (hoursDiff > 0 && hoursDiff < 24) {
         throw new Error('Cannot cancel bookings within 24 hours of start time');
       }
 
@@ -93,7 +94,11 @@ export default function MyBookings() {
     const bookingDate = new Date(booking.start_date);
     const now = new Date();
     const hoursDiff = (bookingDate - now) / (1000 * 60 * 60);
-    return hoursDiff >= 24;
+    
+    // Allow cancellation if:
+    // 1. Booking is in the past (for cleanup)
+    // 2. Booking is more than 24 hours in the future
+    return hoursDiff < 0 || hoursDiff >= 24;
   };
 
   const formatDate = (dateString) => {
