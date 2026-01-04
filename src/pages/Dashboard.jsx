@@ -33,7 +33,11 @@ export default function Dashboard() {
     queryFn: async () => {
       const response = await eventhub.bookings.list();
       const bookings = Array.isArray(response) ? response : (response?.data || []);
-      // Backend already filters by user_id for non-admins
+      // Backend filters by user_id for non-admins, but admins get all bookings
+      // So we need to filter by current user ID on frontend for admins
+      if (user?.role === 'admin') {
+        return bookings.filter(b => b.user_id === user.id);
+      }
       return bookings;
     },
     enabled: !!user?.id,
