@@ -51,6 +51,9 @@ export default function CalendarView() {
   const getBookingsForDate = (date) => {
     if (!date) return [];
     return bookings.filter(booking => {
+      // Filter out cancelled bookings
+      if (booking.status === 'cancelled') return false;
+      
       const bookingDate = booking.start_time || booking.start_date || booking.date;
       if (!bookingDate) return false;
       try {

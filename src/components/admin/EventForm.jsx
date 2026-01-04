@@ -236,7 +236,7 @@ export default function EventForm({ event, onSubmit, onCancel }) {
     }
   };
 
-  const availableResources = resources.filter(r => r.available);
+  const availableResources = resources.filter(r => r.availability_status === 'available');
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

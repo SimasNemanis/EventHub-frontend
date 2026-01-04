@@ -51,14 +51,21 @@ export default function MyBookings() {
         throw new Error('Cannot cancel bookings within 24 hours of start time');
       }
 
+      // Cancel the booking first
       await eventhub.bookings.update(booking.id, { status: 'cancelled' });
       
+      // Try to update event registered count, but don't fail if it errors
       if (booking.booking_type === 'event') {
-        const event = events.find(e => e.id === booking.event_id);
-        if (event) {
-          await eventhub.events.update(event.id, {
-            registered_count: Math.max(0, (event.registered_count || 0) - 1)
-          });
+        try {
+          const event = events.find(e => e.id === booking.event_id);
+          if (event) {
+            await eventhub.events.update(event.id, {
+              registered_count: Math.max(0, (event.registered_count || 0) - 1)
+            });
+          }
+        } catch (error) {
+          console.warn('Could not update event registered count:', error);
+          // Don't throw - cancellation was successful even if count update failed
         }
       }
     },
