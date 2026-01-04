@@ -1,5 +1,5 @@
 // EventHub API Client - Replaces Base44
-const API_URL = '/api'; // Hardcoded for Vercel deployment
+const API_URL = '/api'; // Use Vercel proxy
 
 class EventHubClient {
   constructor() {

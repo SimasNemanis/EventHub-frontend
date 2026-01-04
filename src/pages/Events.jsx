@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { eventhub } from "@/api/eventhubClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Filter, Calendar, MapPin, Users } from "lucide-react";
+import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import EventCard from "../components/EventCard";
 
@@ -176,7 +177,7 @@ export default function Events() {
                     {event.start_date && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>{event.start_date}</span>
+                        <span>{format(new Date(event.start_date), "MMMM d, yyyy 'at' h:mm a")}</span>
                       </div>
                     )}
                     {event.location && (

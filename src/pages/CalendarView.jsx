@@ -10,12 +10,18 @@ export default function CalendarView() {
 
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: () => eventhub.entities.Event.list(),
+    queryFn: async () => {
+      const response = await eventhub.events.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['allBookings'],
-    queryFn: () => eventhub.entities.Booking.list(),
+    queryFn: async () => {
+      const response = await eventhub.bookings.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const monthStart = startOfMonth(currentDate);
@@ -31,12 +37,28 @@ export default function CalendarView() {
 
   const getEventsForDate = (date) => {
     if (!date) return [];
-    return events.filter(event => isSameDay(new Date(event.date), date));
+    return events.filter(event => {
+      const eventDate = event.start_time || event.start_date || event.date;
+      if (!eventDate) return false;
+      try {
+        return isSameDay(new Date(eventDate), date);
+      } catch (e) {
+        return false;
+      }
+    });
   };
 
   const getBookingsForDate = (date) => {
     if (!date) return [];
-    return bookings.filter(booking => isSameDay(new Date(booking.date), date));
+    return bookings.filter(booking => {
+      const bookingDate = booking.start_time || booking.start_date || booking.date;
+      if (!bookingDate) return false;
+      try {
+        return isSameDay(new Date(bookingDate), date);
+      } catch (e) {
+        return false;
+      }
+    });
   };
 
   const selectedDateEvents = getEventsForDate(selectedDate);
@@ -169,7 +191,9 @@ export default function CalendarView() {
                         <p className="font-medium text-gray-900 mb-1">{event.title}</p>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Clock className="w-3 h-3" />
-                          <span>{event.start_time} - {event.end_time}</span>
+                          <span>
+                            {event.start_date ? format(new Date(event.start_date), 'h:mm a') : 'N/A'} - {event.end_date ? format(new Date(event.end_date), 'h:mm a') : 'N/A'}
+                          </span>
                         </div>
                         {event.location && (
                           <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
@@ -198,7 +222,9 @@ export default function CalendarView() {
                         </p>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Clock className="w-3 h-3" />
-                          <span>{booking.start_time} - {booking.end_time}</span>
+                          <span>
+                            {booking.start_date ? format(new Date(booking.start_date), 'h:mm a') : 'N/A'} - {booking.end_date ? format(new Date(booking.end_date), 'h:mm a') : 'N/A'}
+                          </span>
                         </div>
                       </div>
                     ))}

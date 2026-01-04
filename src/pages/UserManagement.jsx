@@ -43,7 +43,7 @@ export default function UserManagement() {
     onSuccess: async (data) => {
       // After user is created, update their role if needed
       if (createFormData.role === 'admin' && data.user?.id) {
-        await eventhub.users.changeRole(data.user.id, 'admin');
+        await eventhub.users.update(data.user.id, { role: 'admin' });
       }
       queryClient.invalidateQueries(['allUsers']);
       setShowCreateForm(false);
@@ -57,7 +57,7 @@ export default function UserManagement() {
 
   const changeRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }) => {
-      await eventhub.users.changeRole(userId, newRole);
+      await eventhub.users.update(userId, { role: newRole });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['allUsers']);

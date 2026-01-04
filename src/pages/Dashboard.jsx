@@ -14,21 +14,31 @@ export default function Dashboard() {
 
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: () => eventhub.entities.Event.list('-date'),
+    queryFn: async () => {
+      const response = await eventhub.events.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: resources = [] } = useQuery({
     queryKey: ['resources'],
-    queryFn: () => eventhub.entities.Resource.list(),
+    queryFn: async () => {
+      const response = await eventhub.resources.list();
+      return Array.isArray(response) ? response : (response?.data || []);
+    },
   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['myBookings', user?.email],
-    queryFn: () => eventhub.entities.Booking.filter({ created_by: user?.email }),
+    queryFn: async () => {
+      const response = await eventhub.bookings.list();
+      const bookings = Array.isArray(response) ? response : (response?.data || []);
+      return bookings.filter(b => b.user_id === user?.id || b.created_by === user?.email);
+    },
     enabled: !!user?.email,
   });
 
-  const upcomingEvents = events.filter(e => e.status === 'upcoming').slice(0, 3);
+  const upcomingEvents = events.filter(e => e.status === 'active' || e.status === 'upcoming').slice(0, 3);
   const availableResources = resources.filter(r => r.available);
   const myActiveBookings = bookings.filter(b => b.status === 'confirmed');
   const fullName = user?.full_name || (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.first_name || 'User');
@@ -36,7 +46,7 @@ export default function Dashboard() {
   const stats = [
     {
       title: "Upcoming Events",
-      value: events.filter(e => e.status === 'upcoming').length,
+      value: events.filter(e => e.status === 'active' || e.status === 'upcoming').length,
       icon: Calendar,
       color: "bg-blue-500",
       link: createPageUrl("Events")
@@ -123,11 +133,11 @@ export default function Dashboard() {
                     <div className="flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        <span>{format(new Date(event.date), "MMM d, yyyy")}</span>
+                        <span>{format(new Date(event.start_date || event.date), "MMM d, yyyy")}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
-                        <span>{event.start_time}</span>
+                        <span>{event.start_time ? format(new Date(event.start_time), "h:mm a") : 'TBD'}</span>
                       </div>
                       {event.location && (
                         <div className="flex items-center gap-2">
